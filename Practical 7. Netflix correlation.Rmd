@@ -1,0 +1,138 @@
+---
+title: "Practical 7. Correlation and Regression"
+author: "Conor Cuddihy"
+date: "2020-10-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Modelling the effect of age on Netflix browsing
+
+###Study Description: 
+A psychologist is interested in how long people spend on Netflix per day and has collected data from $n=93$ accounts belonging to NUI Galway staff and students. You've been asked to lend statistical support to this project and want to implement a regression model to find out whether age is a useful predictor of 'Netflix time'. Let $Y$ be the time in minutes that is spent on Netflix and assume that this is Normally distributed. Let $X$ be the age of students with data available.
+
+### Aims: 
+To investigate whether there is sufficient evidence of a dependency of Netflix time on age in the population of NUI Galway staff and students.
+
+
+
+```{r}
+# Load the libraries needed. You may need to install moderndive 
+library(tidyverse)
+library(moderndive)
+```
+
+
+```{r}
+# read in the data
+netflix_df <- read.csv("netflix_data.csv", header=TRUE)
+glimpse(netflix_df)
+```
+
+
+## Summary Statistics
+1. Calculate the mean and standard deviation of age and Netflix time
+
+```{r}
+netflix_df %>% summarise(mean_age = mean(age), sd_age = sd(age),
+                         mean_time = mean(time), sd_time = sd(time))
+```
+
+
+### Scatterplot 
+
+2. Create a scatterplot of Netflix time vs Ageand give a subjective impression of the relationship between the variables
+
+
+```{r}
+
+ggplot(netflix_df, aes(y=time, x=age)) + 
+  geom_point() +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Scatterplot")
+
+```
+
+The subjective impression is that lower Netflix times are observed among older individuals. We expect a negative correlation
+
+### Correlation
+
+3. Calculate and interpret the Pearson correlation coefficient between age and Netflix time
+
+```{r}
+netflix_df %>% select(time,age) %>% cor()
+```
+
+```{r}
+
+ggplot(netflix_df, aes(y=time, x=age)) + 
+  geom_point() +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Correlation is -0.695")
+
+```
+
+The correlation coefficient $r=-0.96$ suggesting a very strong negative or inverse **linear** relationship between time on Netflix and age.
+
+### Scatterplot of Netflix time vs Age with a Lowess smoother.
+
+4. Create a scatterplot with a smoother and comment on whether this suggests a linear relationship.
+
+```{r}
+
+ggplot(netflix_df, aes(y=time, x=age)) + 
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Scatterplot with Lowess Smoother")
+
+```
+
+The smoother suggests that the overall trend is plausibly linear.
+
+### Fit the model
+
+5. Fit a regression model in `R`, include a summary of the model and create a scatterplot with the line of best fit
+
+```{r}
+
+netflix_model <- lm(time ~ age, data = netflix_df)
+
+# regression tables
+
+summary(netflix_model)
+
+# tidier tables
+
+get_regression_table(model = netflix_model)
+
+```
+
+
+```{r}
+
+ggplot(netflix_df, aes(y=time, x=age)) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Scatterplot with line of best fit")
+
+```
+
+
+## Interpret the results
+6. What is equation of the line of best fit?
+
+The regression equation is $Time=100.4 - 0.514Age$ suggesting that time is reduced in older people.
+
+7. Interpret the intercept and slope estimates.
+
+The information provided by the sample slope is that it is estimated that a 1 year increase in age will result in decreased Netflix Time of 0.514 minutes on average. It is questionable whether this is a meaningful decrease, e.g. people who are ten years older spend just 5.14 mins per day less on average!
+
+The sample intercept states that those with age zero will have an average Netflix Time of 100.4 minutes. This makes no sense and highlights a very important feature of any regression line, namely that a regression line is only valid for the range of data collected.  The minimum age recorded was 17 and the predicted NEtflix Time for age would be 100.4-0.514*(17) = 91.7 minutes, which is much more plausible. In general, never try to extrapolate the regression equation outside the range of the explanatory variable!
+
+
+

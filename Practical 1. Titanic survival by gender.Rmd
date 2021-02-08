@@ -1,0 +1,318 @@
+---
+title: "Practical 1. Surviving the Titanic"
+author: "Conor Cuddihy"
+date: "2020-09-26"
+output: html_document
+---
+
+The main goal of this lab is to increase your knowledge of R and RStudio beyond the simple task asked of you in Assignment 1. R will be used extensively throughout the course both to learn the statistical concepts discussed in the course and to analyse real data and come to informed conclusions. 
+
+An additional goal is to introduce you to reproducible reporting where all analyses and final the report is 'knitted' in the same document.
+
+As the labs progress, you are encouraged to explore beyond what the labs dictate; a willingness to experiment will make you a much better programmer. Before we get to that stage, however, you need to build some basic fluency in R. In this assignment you will learn the fundamental building blocks of R and RStudio: the interface and basic commands.
+
+# Getting started
+
+Each of your assignments will begin with the following steps.
+
+- Open RStudio (either in the lab or on your own laptop)
+
+- There are some packages that you will need.  They are already installed in R in the PC suites on campus but you may need to install them if you are running R on your own laptop/pc.
+
+- Information on how to install R on your laptop (and to install packages) is available here:
+
+[Setting up R and RStudio on your own laptop](https://jjallaire.shinyapps.io/learnr-tutorial-00-setup/) 
+
+
+# Packages
+
+In this assignment we will work with a package that you will use in virtually all analyses you will do: `tidyverse` which is a collection of packages for doing data analysis in a "tidy" way.  This assignment also uses a package that provides historical data relating to the titanic disaster.
+
+If you are trying this out on RStudio in a NUIG PC suite these packages are already installed for you.
+
+If you are using your own laptop install these packages by running the following in the console.
+
+```{r eval = FALSE}
+install.packages("tidyverse")
+install.packages("titanic")
+
+```
+
+Now that the packages are installed they need to be loaded.This can be done using the following code:
+
+```{r }
+library(tidyverse) 
+library(titanic)
+
+```
+
+You may get some warnings here about conflicts  .... ignore them.
+
+# Data
+
+The data frame we will be working with in this example is called `titanic_train` and it's in the `titanic` package. It is a single data frame containing information on the fate of passengers on the maiden voyage of the ocean liner Titanic, summarised according to economic status (class), sex, age and survival.
+
+To find out more about the dataset, type the following in your Console: `?titanic_train`. A question mark before the name of an object will always bring up its help file. This command must be run in the Console.
+
+1. Based on the help file, what are the variables included in the data frame? 
+2. What variable represents whether a passenger survived or not and what is the code for surviving ?
+
+Let's take a look at how many observations (i.e. passengers) there are data on. To do so we can make look at the *dimension* of the dataset using the *dim* command:
+
+```{r}
+titanic_train %>% dim()
+```
+
+There is a lot going on here, so let's slow down and unpack it a bit. 
+
+First, the pipe operator: `%>%`, takes what comes before it and sends it as the first argument to what comes after it. So here, we're saying start with the `titanic_train` data frame and then run the `dim` command to see how many observations and variables are in it (namely 891 observations on 12 variables).
+
+Let's check out the first few observations of your data frame using the *head* command:
+
+```{r}
+titanic_train %>% head()
+```
+
+Now let's take a look at summaries of each variable. To do so we can make a *summary table* of each variable in the dataset using the *summary*:
+
+```{r}
+titanic_train %>% summary()
+```
+
+# Data visualisation and summary
+
+What if you wanted to arrange your observations by increasing Fare to see if you can notice any trends in the first 10 observations. You can use the *arrange()* command to achieve this:
+
+```{r}
+titanic_train %>% arrange(Fare) %>% head(10)
+
+```
+
+Looks like those that paid less were less like to survive.
+
+What about those that paid more? Order the data by descending order of fare and print out the first 10:
+
+
+```{r}
+titanic_train %>% arrange(desc(Fare)) %>% head(10)
+
+```
+
+As you look down the order there appear to be more survivors (survived equal to 1) and more in first class.
+
+There are two (oddly named) variables that represent family size (SibSp which gives the number of siblings and spouses and Parch (the number of parents and children aboard). You can add these together to get a new variable FamSize. 
+
+Now, to make your new variable, you *mutate()* the original variables into the new one. You need to add the number of parents, siblings and the subject themselves to get the necessary family size.  When you have created the variable, arrange the data in descending order of family size and check if family size was related to survival.
+
+```{r}
+titanic_train %>%
+  mutate(FamSize = Parch + SibSp + 1) %>%
+  arrange(desc(FamSize)) %>% head(10)
+```
+
+What do you notice ?
+
+Time to make some plots.
+
+Before we do so let's create a new (categorical) variable that represents whether a passenger survived or not as zeroes and ones don't often say a great deal.  To do this use the *mutate* command to create a new variable called Survived where 0 is coded as "No" and 1 as "Yes" and while we are at it let's create a new data frame so that the original data frame is left as it was in case we need to go back to it later.
+
+### Turn numerical values of Survived column to "No" & "Yes" (new data frame)
+
+Look at the syntax.  We are using the assignment operator: `<-` to assign the name 'passengers' to the new data frame we are creating.  The commands we are issuing are "use the titanic_train data then mutate a new variable called Survived where if Survived was coded as 0 recode it as No else code it as Yes". 
+
+
+```{r}
+passengers <- titanic_train %>% 
+ mutate(Survived = ifelse(Survived == 0, "No", "Yes"))
+
+```
+
+### Numerical Summaries
+
+Start by creating a table of the number and proportion of survivors.  This can be done in several ways.
+
+One way is to use the table function (which returns the frequencies and the prop.table which returns the corresponding percentages)
+
+The frequencies are calculated as:
+
+```{r}
+passengers %>% select(Survived) %>% table()
+
+```
+
+and the corresponding percentages as:
+
+
+```{r}
+passengers %>% select(Survived) %>% table() %>% prop.table()
+
+```
+
+Another way to do this is to create a variable for the frequency (n) and then another variable that is the frequency divided by the total (i.e. a percentage):
+
+```{r}
+passengers %>%
+     group_by(Survived) %>%
+     summarise (n = n()) %>%
+     mutate(freq = n / sum(n))
+
+```
+
+
+From the above you can tell that we have data on 891 passengers of which 342 (i.e. 38%) survived.
+
+Is survival probability independent of gender ?
+
+Let's work out the percentage of survivors by gender and then visualise this using a bar chart.
+
+```{r}
+passengers %>% select(Survived, Sex) %>% table() %>% 
+                                          prop.table(margin = 2)
+
+```
+
+Note that the margin=2 command is needed so that column percentages are needed.  If you prefer you can also calculate the percentages as follows (note the use of the group_by command to make sure the summaries are calculated over the two levels of Survived:
+
+```{r}
+passengers %>%
+     group_by(Sex, Survived) %>%
+     summarise (n = n()) %>%
+     mutate(freq = n / sum(n))
+
+
+```
+
+Either way it looks like survival depends on gender; only 19% of males survived compared to 74% females.
+
+Next, we need to visualise these data. We will use the `ggplot` function for this. 
+
+### Visualising the data
+
+There are many ways to plot data in R.  One of the most popular is to use the ggplot2 package.   This will be discussed in more detail in lectures and tutorials.
+
+To plot your data using ggplot2, you specify three things:
+
+1. Your data
+2. Your aesthetics (for example, what's on the x-axis)
+3. Your layers (for example, barplot, scatterplot)
+
+The first argument is the data you're visualising. Next you define the `aes`thetic mappings. In other words, the columns of the data that get mapped to certain aesthetic features of the plot, e.g. the `x` axis will represent the variable called `x` and the `y` axis will represent the variable called `y`. Note that the aes() function is really a way to map the aesthetics of the plot to the variables in the data. See the Modern Dive book (by Chester Ismay & Albert Y. Kim) mentioned on the course Blackboard page  for more details.
+
+Then we add another layer to this plot where we define which `geom`etric shapes we want to use to represent each observation in the data. 
+
+If this seems like a lot, it is. Don't panic, you will learn about the philosophy of building data visualisations in more detail over the course and in future assignments. For now, follow along with the code that is provided.
+
+First you'll plot a barplot to visualise the survival prospects overall and then by gender aboard the Titanic. Note that we are using the updated data frame called 'passengers' as that has the nicely coded survived variable.  The code is 'read' as follows: create a plot using the passengers data , use Sex as the aesthetic for the x-axis, and the shape I want to plot is a bar.
+
+### Bar plot of survival overall
+
+```{r}
+ggplot(passengers, aes(x = Survived)) +
+  geom_bar()
+
+```
+
+The bar chart displays the number of passengers that survived and didn't survive.  An alternative to displaying the number (i.e. frequency) is to display the percentage.  
+
+The probability of survival by gender can be shown nicely as a stacked bar chart:
+
+### Plot survival by gender 
+
+As a stacked barchart:
+
+```{r}
+ggplot(data=passengers, aes(Sex))+
+     geom_bar(aes(fill=Survived), position="fill") +
+     ylab("Percent")
+
+```
+
+or separately for females:
+
+```{r}
+passengers %>% filter(Sex ==  'female') %>%
+   ggplot(aes(Survived,..count../sum(..count..),fill=Survived))+
+     geom_bar()+
+     scale_y_continuous(labels=scales::percent) +
+     ylab("Percent")
+
+```
+
+
+and males:
+
+
+```{r}
+passengers %>% filter(Sex ==  'male') %>%
+   ggplot(aes(Survived,..count../sum(..count..),fill=Survived))+
+     geom_bar()+
+     scale_y_continuous(labels=scales::percent) +
+     ylab("Percent Survived")
+
+```
+
+
+Let's make a few scatterplots.
+
+### Scatterplots
+
+For starters let's create a scatterplot to see if the age of any given passenger is related to the fare that they paid. The ggplot2 code needed to create such a scatterplot is below. 
+
+You can read the ggplot2 like a sentence: "start with the passenger data frame and map Age to the x axis and Fare to the y axis, adding points on as the layer of the plot."  Note that the '%>%' command is read as 'then' in the sequence of arguments while the '+' is used by ggplot to add new components to the graph.
+
+
+```{r}
+passengers %>% ggplot(aes(x = Age, y = Fare, color = Sex)) +
+                geom_point()
+```
+
+The first thing you notice is that a warning has appeared to tell you that there are 177 passengers with no data recorded for age or fare.
+
+From the data we can plot it looks like a lot of the people who paid more were also substantially older. Additionally, you immediately see the two outliers on top of the plot, which are worth investigating.  Let's find out who they are:
+
+```{r}
+passengers %>% select(Name, Age, Pclass,Fare, Survived) %>% arrange(desc(Fare)) %>% head(10)
+
+```
+
+See what you can find out about them on the web!
+
+
+Let's take the previous plot, redraw it but exclude missing data (using the *drop_na* command then colour each point by Sex, to see if there is any relationship between Sex, Age and Fare in the one scatterplot:
+
+```{r}
+
+passengers %>% drop_na() %>% 
+        ggplot(aes(x = Age, y = Fare, color = Sex)) +
+        geom_point()
+
+```
+
+There is a cluster of women towards the top of the plot that were slightly older and also paid more to get on board of the Titanic.  A lot of the men paid less and were younger.
+
+The primary variable of interest here is whether a passenger survived or not.  This can be worked into the scatterplot very easily with faceting, which is a way to produce multiple plots simultaneously:
+
+```{r}
+
+passengers %>% drop_na() %>% 
+          ggplot(aes(x = Age, y = Fare, color = Sex)) +
+          geom_point() +
+          facet_grid(~Survived)
+
+```
+
+It looks like a lot of those that survived paid more for their fare than those that didn't.  What was the typical fare for those that didn't survive ?
+
+You can check your guess by calculating it using R. You have to first filter out those that survived, select the Fare variable and then calculate the mean:
+
+```{r}
+
+passengers %>%
+  filter(Survived == "Yes") %>% select(Fare) %>% summary()
+
+```
+
+Why do you think there is a difference between the mean and median here ?
+
+The summary so far is that gender and the fare paid appear related to whether a passenger survived the titanic or not.  This suggests that the class of passenger (captured in the Pclass variable) looks like it will be important explanatory variable (i.e. will explain why the probability of surviving changes from person to person).  You will do this analysis yourself as the next assignment!
+

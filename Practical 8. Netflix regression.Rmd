@@ -1,0 +1,214 @@
+---
+title: "Practical 9. Regression, prediction and assumption checking"
+author: "Conor Cuddihy"
+date: "2020-11-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Modelling the effect of age on Netflix browsing
+
+###Study Description: 
+A psychologist is interested in how long people spend on Netflix per day and has collected data from $n=93$ accounts belonging to NUI Galway staff and students. You've been asked to lend statistical support to this project and want to implement a regression model to find out whether age is a useful predictor of 'Netflix time'. Let $Y$ be the time in minutes that is spent on Netflix and assume that this is Normally distributed. Let $X$ be the age of students with data available.
+
+### Aims: 
+To investigate whether there is sufficient evidence of a dependency of Netflix time on age in the population of NUI Galway staff and students.
+
+
+
+```{r}
+# Load the libraries needed. You may need to install moderndive 
+library(tidyverse)
+library(moderndive)
+```
+
+
+```{r}
+# read in the data
+netflix_df <- read.csv("netflix_data.csv", header=TRUE)
+summary(netflix_df)
+```
+
+### Fit the model
+
+1. Fit a regression model, produce a summary table of the regression and plot the line of best fit
+
+
+```{r}
+# fit model
+netflix_model <- lm(time ~ age, data = netflix_df)
+
+# Regression tables
+summary(netflix_model)
+get_regression_table(model = netflix_model)
+
+# scatterplot with line of best fit
+ggplot(netflix_df, aes(y=time, x=age)) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Scatterplot with line of best fit")
+
+```
+
+### Hypothesis tests
+
+2. Interpret the p-values for the slope parameter
+
+There is a significant dependence of Netflix time on age by virtue of the p-value for the Null Hypothesis that the population slope is considerably less that 0.05. As the p-value is very small there is convincing evidence against the Null Hypothesis and a claim is made that the population slope is different from zero i.e. there is a meaningful dependence of Netflix time on age.
+
+3. Interpret the 95% confidence intervals for the slope parameter
+ 
+A 95% CI for the slope is between -0.55 and -0.48; as this is strictly negative there is evidence that the slope is non-zero in agreement with the hypothesis test.  The benefit of the 95% CI is that if gives an estimate of the likely values for the populaiton slope.  The p-value provides evidence that it is non-zero but no indication of its value.
+
+### Assessing the Adequacy of a Simple Linear Regression
+
+One of the key notions in Regression is the concept of 'explained variability'. A useful regression model is one where the variability displayed in the response variable can be explained by its dependence on one or more explanatory variables. Indeed this very notion is one basis for assessing the adequacy of regression models.
+
+
+```{r}
+# tidier Model Summaries
+
+get_regression_summaries(netflix_model)
+
+```
+
+
+For example, in a simple linear regression the scatter about the regression line can be used to estimate the amount of variability in the response variable 'explained' by its dependency on the explanatory variable. If, for example, the data fall on a straight line then there is perfect dependence and all of the variability in the response is due to the explanatory variable. If, however, the data scatter considerably about the line of best fit then not all of the variability in the response is due to the explanatory variable. The 'amount' of explained variability is typically summarised by the $R^2$ statistic. The value of $R^2$ is always between 0 and 1 (or 0% and 100% when expressed as a percentage) where a value of 1 (100%) corresponds to perfect dependence of the response on the explanatory variable i.e. all of the variation in the response is explained by the explanatory variable. At the other end of the scale, 0 corresponds to no dependence whatsoever of the response variable on the explanatory variable. The higher the value of R2 the more 'useful' is the simple linear regression.
+
+4. Obtain and interpret the coefficient of determination $R^2$ for your model
+
+The reported value of the $R^2$ statistic in the regression output for the Netflix time example is 0.923 (i.e. 92.3%) and hence a considerable amount (i.e. 92.3%) of the variability in Netflix viewing time is explained by its dependence on the age of the customer.
+
+### Make some predictions across the range of age where data were collected.
+
+5. Predict viewing time for people of age 20, 25 and 30
+
+```{r}
+netflix_new <- data.frame(
+  age = c(20, 25, 30)
+)
+
+  
+get_regression_points(netflix_model, newdata = netflix_new)
+
+```
+
+6. Calculate 95% Confidence Intervals for mean Netflix time for the population of customers of interest (i.e. those with age 20, 25 and 30)
+
+```{r}
+predict(netflix_model, newdata = netflix_new, interval = "confidence")
+```
+
+
+7. Calculate 95% Prediction Intervals for actual Netflix time for any particular customer with age 20, 25 or 30.
+
+```{r}
+predict(netflix_model, newdata = netflix_new, interval = "prediction")
+```
+
+8. What si the difference between these intervals in Q6 and 7?
+
+The confidence intervals are a range of likely values for the average daily Netflix time in the population of people aged 20, 25 and 30. The prediction intervals give uncertainty for an e.g. 20 year old who might watch Netflix tomorrow.
+
+### Plots with prediction intervals
+
+If so desired the graph can be used to approximate interval estimates of the mean Netflix Time in the population of NUI Galway students and staff 
+
+```{r}
+
+pred.int <-  predict(netflix_model, newdata = netflix_df, interval = "prediction")
+
+runner.df2 <- cbind(netflix_df, pred.int)
+
+ggplot(runner.df2, aes(y=time, x=age)) +
+  geom_point() +
+  stat_smooth(method = lm) +
+# 3. Add prediction intervals
+  geom_line(aes(y = lwr), color = "red", linetype = "dashed") +
+  geom_line(aes(y = upr), color = "red", linetype = "dashed") +
+  labs(x = "Age (years)", y = "Netflix Time (mins)", 
+       title = "Scatterplot with line of best fit and Prediction Intervals")
+
+
+
+```
+
+For example a rough and ready approximation of the population mean Netflix Time for those 40 year olds appears to be somewhere between 79 and 81 minutes.
+
+
+### Residual Plots to check assumptions
+
+There are of course important assumptions underlying a simple linear regression model and these assumptions must be checked.
+
+A simple linear regression has the following underlying assumptions:
+1. The sample is representative of the population of interest and the subjects are independent (Independence assumption);
+2. The relationship between the mean response and the explanatory variable is linear in the population (Linearity assumption);
+3. The response exhibits variability about the population regression line in the shape of a Normal distribution (Normality assumption);
+4. The standard deviation of the response is the same for any given value of the explanatory variable (Equal Spreads assumption).
+
+The first assumption relates to the sample itself - if the sample is not representative of the population of interest all inference is extremely dubious. Independence is valid in the Netflix example as the response and explanatory variables were measured once only for each person separately.
+
+The assumption that relates to Linearity can be checked by looking at the scatter plot. If the linearity assumption is valid the overall pattern should resemble a linear pattern (a smoother is very useful here).
+
+The Normality and Equal Spreads assumptions relate to the distribution and spread of the response about the population regression line. To investigate whether these assumptions are plausible, based on the sample available, is best achieved using suitable residual plots.
+
+A residual (in the regression context) is the difference between the observed value of the response and that predicted by the regression equation (the so-called fitted value) at the value of each subject's explanatory variable in turn. 
+
+Residuals can be used to provide an indication as to how well the model fits the data. The validity of the simple linear regression assumptions can be checked graphically using different plots of the standardised residuals. The two most useful residual plots are:
+  
+1. A plot of the  residuals (on the vertical axis) against the fitted values from the regression. If the Linearity and Equal Spreads assumptions are valid, this plot should show a random scatter of points;
+
+2. A histogram of the  residuals. This should be of a roughly symmetric and bell shaped shape if the Normality assumption is adequate.
+
+
+### Residuals vs fits
+
+```{r}
+
+get_regression_points(netflix_model) %>% 
+ggplot(aes(x = time_hat, y = residual)) +
+  geom_point() +
+  labs(x = "Fitted Values (mins)", y = "Residual", title = "Residuals vs Fits")
+
+
+```
+
+Since this plot is more or less a random scatter, the equal variances assumpation appears justified.
+
+### Histogram of the residuals to check normality
+
+```{r}
+
+get_regression_points(netflix_model) %>%
+ggplot( aes(x = residual)) +
+geom_histogram(bins=10, color = "white") +
+labs(x = "Residual")
+  
+```
+
+Since this plot is more or less symmetric, the Normality assumption appears justified.
+
+
+### Overall Conclusion.
+
+There was evidence of a significant negative dependence (P < 0.001) of Netflix Time on age in the population of NUI Galway staff and students.  Further it is estimated that daily Netlfix Time decreases by between 0.48 to 0.55 minutes on (average) for every year of age across a range of age from 17 to 50.
+
+The $R^2$ for the model was 92.3% which suggests that a considerable amount of variability in daily Netflix time is explained by its relationship with age i.e. knowing a person's age is a good predictor of their likely time on Netflix.  The level of uncertainty when making a prediction is quite high as evidenced by the width of the prediction intervals so more data need to be collected to make more precise estimates.
+
+The assumptions underlying the model look reasonable.
+
+
+
+
+
+
+
+
+
+
+
+

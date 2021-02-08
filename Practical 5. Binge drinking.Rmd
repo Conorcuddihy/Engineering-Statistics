@@ -1,0 +1,156 @@
+---
+title: "Practical 5. Binge drinking"
+author: "Conor Cuddihy"
+date: "2020-10-11"
+output: word_document
+---
+
+## Binge drinking
+
+Data were collected on a sample of parents and their kids to compare drinking habits between parents and their children. In this Practical you'll compare drinking behaviour through units consumed and whether the individual reported binge drinking in the last week.
+
+```{r}
+library(infer)
+library(tidyverse)
+library(tolerance)
+```
+
+## Read in the alcohol data
+
+Read in the data and have a look at the variable names and structure of the data.
+
+```{r}
+alc_df <- read.csv("alcohol.csv")
+glimpse(alc_df)
+```
+
+## Summary Statistics of Parents and Kids
+
+1. Summarise the units of alcohol consumed by parents and kids combined
+
+
+```{r}
+alc_df %>% select(units) %>% summary()
+```
+
+2. Get the proportion of individuals who reported binge drinking in the previous week
+
+```{r}
+alc_df %>% select(binge) %>% table() %>% prop.table()
+```
+
+
+## Mean and Standard Deviation of units for parents and kids
+
+3. Get the mean and standard deviation of parents and kids
+
+```{r}
+
+alc_df %>% group_by(child) %>%
+            summarise(n = n(), Mean=mean(units), SD= sd(units))
+
+```
+
+
+## Boxplot of units
+
+4. Produce a boxplot of units consumed for parents and their children
+
+
+```{r}
+alc_df %>% ggplot(aes(y=units,group=child,fill=child)) + geom_boxplot()
+  
+```
+
+5. Interpret the plot in your own words
+
+
+## 95% Confidence Interval for the difference in mean units consumed
+
+6. Calculate and interpret a 95% confidence interval for the population mean difference in units consumed between parents and children
+
+```{r}
+
+t.test(units ~ child,data = alc_df)
+
+```
+
+
+## 95% Bootstrap CI for the mean
+
+7. Calculate a 95% bootstrap interval for the mean difference
+
+```{r}
+
+boot <- alc_df %>%
+  specify(response = units, explanatory = child) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "diff in means", order = c("Child", "Parent"))
+
+percentile_ci <- get_ci(boot)
+round(percentile_ci,2)
+
+```
+
+
+8. Visualise the bootstrap interval and comment on any differences with the 95% confidence interval above
+
+```{r}
+boot %>% visualize(endpoints = percentile_ci, direction = "between") +
+                   xlab("Bootstrap Mean") + ylab("Frequency")
+
+```
+
+
+## 95% Tolerance Interval
+
+9. Calculate a 95% tolerance interval covering 95% of units of alcohol values for each group separately
+
+```{r}
+
+normtol.int(alc_df$units[alc_df$child == "Parent"], alpha = 0.05, P = 0.95, side = 2)
+
+normtol.int(alc_df$units[alc_df$child == "Child"], alpha = 0.05, P = 0.95, side = 2)
+
+```
+
+
+## Difference in binge drinking proportion
+
+10. Find the proportion of parents and their kids who reported binge drinking
+
+```{r}
+
+alc_df %>% group_by(child) %>% summarise(n = n(), prop = mean(binge))
+
+```
+
+
+11. Obtain a 95% confidence interval for the difference in proportions of binge drinkers between parents and children
+
+```{r}
+
+
+p1 = 0.74
+p2 = 0.47
+n1 = 47
+n2 = 53
+diff = p1-p2
+lower_ci = diff - 1.96*sqrt((p1*(1-p1))/n1 + (p2*(1-p2))/n2)
+upper_ci = diff + 1.96*sqrt((p1*(1-p1))/n1 + (p2*(1-p2))/n2)
+lower_ci
+upper_ci
+
+
+```
+
+
+12. Interpret this confidence interval
+
+## Assumptions
+
+13. What are the assumptions relating to the intervals you have calculated? Are they satisfied here?
+
+## Conclusion
+
+14. Write up a conclusion using the plots and intervals you have obtained above

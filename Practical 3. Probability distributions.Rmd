@@ -1,0 +1,148 @@
+---
+title: "Practical 3. Binomial and Poisson examples"
+author: "Conor Cuddihy"
+date: "2020-09-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Calculating probabilities using the binomial distribution
+
+## Galway rain example
+
+The probaility that it rains in Galway on a given day is 0.8. You are interested in $X$ the number of rainy days in the next week. 
+
+What is the probability that it rains every day?
+ 
+This can be answered by assuming that the random variable of interest (i.e. the number of rainy days) follows a binomial distribution with probability 0.8 and number of trials equal to 3, i.e. $X\sim Binomial(n=7,p=0.8)$. The command needed is `dbinom(x, size, prob)`.
+ 
+
+```{r}
+dbinom(x=7, size=7, prob=0.8)
+```
+
+1. Find the probability that it rains twice in the next week
+
+
+```{r}
+
+```
+
+2. Find the probability that it rains less than four times in the next week
+
+```{r}
+
+```
+
+
+3. Find the probability that it rains between 2 and 4 times in the next week, i.e. $2 \leq X \leq 4$
+
+```{r}
+
+```
+
+
+
+
+
+
+## Pollutant example
+
+You are working for the EPA and are interested in the levels of water pollution in Galway, where previous estimates suggest 10% of samples are polluted. Let $X$ denote the number of samples that contain pollutant in the next 18 samples analyzed. Then $X$ is a binomial random variable with $p = 0.1$ and $n = 18$. 
+
+4. Find the probability that, in the next 18 samples exactly 2 contain the pollutant.
+
+
+```{r}
+
+```
+
+
+5. Determine the probability that there are between 3 and 6 samples contain pollutants i.e. $3 \leq X \leq 6$. 
+
+```{r}
+
+```
+
+
+# Calculating probabilities using the Poisson distribution
+
+## Burglaries in Galway
+
+There was a [30% increase in monthly burglaries in county Galway in 2017](https://www.galwaydaily.com/news/huge-increase-in-burglary-rate-across-galway/), with a total of 672 (1.84 per day) reported to the Gardai. Suppose the number of burglaries in Galway follows a Poisson distribution with mean of 1.84 per day.
+
+6. Find the probability that there will be exactly 3 burglaries in Galway in one day
+ 
+```{r}
+
+```
+
+7. Find the probability that there will be less than 3 burglaries in Galway in one day
+ 
+```{r}
+
+```
+
+8. Find the probability that there will be more than 20 burglaries in a week
+ 
+```{r}
+
+```
+
+
+## Flaws on Copper Wire example.
+
+Suppose that the number of flaws on a thin copper wire follows a Poisson distribution with a mean of 2.3 flaws per mm. 
+
+9. Find the probability of exactly 2 flaws in 1 mm of wire
+ 
+ 
+```{r}
+
+```
+
+10. Determine the probability of 10 flaws in 5 mm of wire.
+
+```{r}
+
+```
+ 
+11. Find the probability that there will be more than 10 flaws in 5mm of wire.
+
+```{r}
+
+```
+
+
+# Calculating probabilities using the Normal distribution
+
+Suppose the commute to work in NUI, Galway follows a Normal distribution with mean 20 and standard deviation 5. 
+
+12. Find the probability of making it to work in 10 minutes or less
+
+```{r}
+
+```
+
+13. Find the probabaility that it takess more than 25 minutes to get to work
+
+```{r}
+
+```
+
+
+14. Find the probability of making it to work in between 10 and 15 minutes
+
+```{r}
+
+```
+
+15. Determine the time below which 90% of commutes are lower than
+
+```{r}
+
+```

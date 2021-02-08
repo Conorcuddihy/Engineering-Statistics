@@ -1,0 +1,164 @@
+---
+title: "Practical 4. Training Intervention Analysis"
+author: "Conor Cuddihy"
+date: "2020-10-04"
+output: word_document
+---
+
+## Context: Celtic Study introduced in class.
+
+Scaffold for the analysis when the primary response variable is VO2 max.  You need to rerun the analysis using the Squat variables (i.e. Squat_Pre, Squat_Post) to see if there has been any improvement on average and provide a tolerance interval for the likely improvement for 95% of players in the population of interest (with 95% confidence).
+
+
+```{r}
+library(infer)
+library(tidyverse)
+library(tolerance)
+```
+
+## Read in the training intervention data
+
+Read in the data and have a look at the variable names and structure of the data.
+
+```{r}
+
+train.df <- read.csv("training_intervention.csv")
+glimpse(train.df)
+```
+
+## Focus on the VO2 max response variables.
+
+
+## Summary Statistics of Pre and Post
+
+1. Summarise the pre- and post-intervention VO2 max 
+
+
+```{r}
+train.df %>% select(VO2.max_Pre,VO2.max_Post) %>% summary()
+
+```
+
+## Mean and Standard Deviation of Pre and Post
+
+2. Get the mean and standard deviation of pre- and post-intervention 
+
+```{r}
+
+train.df %>% select(VO2.max_Pre,VO2.max_Post) %>%
+            summarize(Pre_Mean=mean(VO2.max_Pre), Pre_SD= sd(VO2.max_Pre),
+                      Post_Mean=mean(VO2.max_Post), Post_SD= sd(VO2.max_Post))
+
+```
+
+## Scatterplot of Pre and Post with line of equality
+
+3. Produce a scatterplot of pre- and post-intervention VO2 max along with the line of equality 
+
+
+```{r}
+train.df %>% ggplot(aes(x = VO2.max_Pre, y = VO2.max_Post)) +
+        geom_point() + 
+  ggtitle("Scatterplot of Pre and Post VO2 Max") +
+  ylab("Post VO2 Max (units ?)") +
+  xlab("Post VO2 Max (units ?)") +
+  geom_abline(slope=1, intercept=0)
+  
+```
+
+4. Interpret the plot in your own words
+
+
+
+## Calculate the Improvement
+
+5. Calculate a new variable and have a look at the data frame to see that it has been created.  High values of VO2 max are good to Post-Pre is a better measure than Pre-Post to capture this.
+
+```{r}
+
+train.df <- train.df %>% mutate(Improvement = VO2.max_Post-VO2.max_Pre) %>%
+              glimpse()
+  
+
+
+```
+
+## Mean and Standard Deviation of Improvement
+
+6. Calculate the mean and SD of Improvement
+
+```{r}
+
+train.df %>% select(Improvement) %>%
+            summarize(Imp_Mean=mean(Improvement), Imp_SD= sd(Improvement))
+
+```
+
+
+## Boxplot of Improvement
+
+7. Produce a boxplot of Improvement
+
+```{r}
+
+
+train.df %>% ggplot(aes(x = "", y = Improvement)) +
+        geom_boxplot() + 
+  ggtitle("Boxplot of Improvement in VO2 Max") +
+  ylab("Improvement in VO2 Max (units ?)") +
+  xlab("") +
+  coord_flip()
+
+```
+
+## 95% Confidence Interval for the mean
+
+8. Calculate and interpret a 95% confidence interval for the population mean improvement in VO2 max (hint: use the t.test function)
+
+```{r}
+
+train.df %>% select(Improvement) %>% t.test()
+
+```
+
+
+## 95% Bootstrap CI for the mean
+
+9. Calculate a 95% bootstrap interval for th mean improvement in VO2 max
+
+```{r}
+
+boot <- train.df %>%
+  specify(response = Improvement) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+percentile_ci <- get_ci(boot)
+round(percentile_ci,2)
+
+```
+
+
+10. Visualise the bootstrap interval and comment on any differences with the 95% confidence interval above
+
+```{r}
+boot %>% visualize(endpoints = percentile_ci, direction = "between") +
+                   xlab("Bootstrap Mean") + ylab("Frequency")
+
+```
+
+
+## 95% Tolerance Interval
+
+11. Calculate a 95% tolerance interval covering 95% of improvement values 
+
+```{r}
+
+normtol.int(train.df$Improvement, alpha = 0.05, P = 0.95)
+
+```
+
+
+## Conclusion
+
+12. Write up a conclusion using the plots and intervals you have obtained above
